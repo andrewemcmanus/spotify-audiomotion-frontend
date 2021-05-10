@@ -28,7 +28,7 @@ export default class AudioMotionAnalyzer extends React.Component {
  * @param {object} [options]
  * @returns {object} AudioMotionAnalyzer object
  */
-	constructor( container, options = {} ) {
+	super( container, options = {} ) {
 
 		this._ready = false;
 
@@ -203,7 +203,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 		// Resume audio context if in suspended state (browsers' autoplay policy)
 		const unlockContext = () => {
-			if ( audioCtx.state == 'suspended' )
+			if ( audioCtx.state === 'suspended' )
 				audioCtx.resume();
 			window.removeEventListener( 'click', unlockContext );
 		}
@@ -288,7 +288,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 	}
 	set mode( value ) {
 		const mode = value | 0;
-		if ( mode >= 0 && mode <= 10 && mode != 9 ) {
+		if ( mode >= 0 && mode <= 10 && mode !== 9 ) {
 			this._mode = mode;
 			this._calcAux();
 			this._calcBars();
@@ -339,7 +339,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 	}
 	set spinSpeed( value ) {
 		value = +value || 0;
-		if ( this._spinSpeed === undefined || value == 0 )
+		if ( this._spinSpeed === undefined || value === 0 )
 			this._spinAngle = -HALF_PI; // initialize or reset the rotation angle
 		this._spinSpeed = value;
 	}
@@ -584,7 +584,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 		this._outNodes.push( node );
 
 		// when connecting the first node, also connect the analyzer nodes to the merger / output nodes
-		if ( this._outNodes.length == 1 ) {
+		if ( this._outNodes.length === 1 ) {
 			for ( const i of [0,1] )
 				this._analyzer[ i ].connect( ( ! this._stereo && ! i ? this._output : this._merger ), 0, i );
 		}
@@ -604,7 +604,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 		// if disconnected from all nodes, also disconnect the analyzer nodes so they keep working on Chromium
 		// see https://github.com/hvianna/audioMotion-analyzer/issues/13#issuecomment-808764848
-		if ( this._outNodes.length == 0 ) {
+		if ( this._outNodes.length === 0 ) {
 			for ( const i of [0,1] )
 				this._analyzer[ i ].disconnect();
 		}
@@ -622,8 +622,8 @@ export default class AudioMotionAnalyzer extends React.Component {
 			return this._energy.val;
 
 		// if startFreq is a string, check for presets
-		if ( startFreq != ( startFreq | 0 ) ) {
-			if ( startFreq == 'peak' )
+		if ( startFreq !== ( startFreq | 0 ) ) {
+			if ( startFreq === 'peak' )
 				return this._energy.peak;
 
 			const presets = {
@@ -660,7 +660,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 	 * @param {object} options
 	 */
 	registerGradient( name, options ) {
-		if ( typeof name !== 'string' || name.trim().length == 0 )
+		if ( typeof name !== 'string' || name.trim().length === 0 )
 			throw new AudioMotionError( 'ERR_GRADIENT_INVALID_NAME', 'Gradient name must be a non-empty string' );
 
 		if ( typeof options !== 'object' )
@@ -721,9 +721,9 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 		// coerce parameters to Number; `NaN` results are rejected in the condition below
 		if ( params ) {
-			maxLeds = params.maxLeds | 0, // ensure integer
-			spaceV  = +params.spaceV,
-			spaceH  = +params.spaceH;
+			let maxLeds = params.maxLeds; // ensure integer
+			let spaceV  = +params.spaceV;
+			let spaceH  = +params.spaceH;
 		}
 
 		this._ledParams = maxLeds > 0 && spaceV > 0 && spaceH >= 0 ? [ maxLeds, spaceV, spaceH ] : undefined;
@@ -812,10 +812,11 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 		this._radius         = canvas.height * ( this._stereo ? .375 : .125 ) | 0;
 		this._barSpacePx     = Math.min( this._barWidth - 1, ( this._barSpace > 0 && this._barSpace < 1 ) ? this._barWidth * this._barSpace : this._barSpace );
-		this._isOctaveBands  = ( this._mode % 10 != 0 );
+		this._isOctaveBands  = ( this._mode % 10 !== 0 );
 		this._isLedDisplay   = ( this._showLeds && this._isOctaveBands && ! this._radial );
 		this._isLumiBars     = ( this._lumiBars && this._isOctaveBands && ! this._radial );
-		this._maximizeLeds   = ! this._stereo || this._reflexRatio > 0 && ! this._isLumiBars;
+		// CHECK PARSING
+		this._maximizeLeds   = ! this._stereo || ( this._reflexRatio > 0 && ! this._isLumiBars );
 
 		const isDual = this._stereo && ! this._radial;
 		this._channelHeight  = canvas.height - ( isDual && ! this._isLedDisplay ? .5 : 0 ) >> isDual;
@@ -934,14 +935,14 @@ export default class AudioMotionAnalyzer extends React.Component {
 		const [ ledCount, ledSpaceH, ledSpaceV, ledHeight ] = this._leds || [];
 
 		// select background color
-		const bgColor = ( ! this.showBgColor || isLedDisplay && ! this.overlay ) ? '#000' : this._gradients[ this._gradient ].bgColor;
+		const bgColor = ( ! this.showBgColor || ( isLedDisplay && ! this.overlay ) ) ? '#000' : this._gradients[ this._gradient ].bgColor;
 
 		// compute the effective bar width, considering the selected bar spacing
 		// if led effect is active, ensure at least the spacing from led definitions
 		let width = this._barWidth - ( ! isOctaveBands ? 0 : Math.max( isLedDisplay ? ledSpaceH : 0, this._barSpacePx ) );
 
 		// make sure width is integer for pixel accurate calculation, when no bar spacing is required
-		if ( this._barSpace == 0 && ! isLedDisplay )
+		if ( this._barSpace === 0 && ! isLedDisplay )
 			width |= 0;
 
 		let currentEnergy = 0;
@@ -967,8 +968,8 @@ export default class AudioMotionAnalyzer extends React.Component {
 				ctx.fillStyle = bgColor;
 
 				// exclude the reflection area when overlay is true and reflexAlpha == 1 (avoids alpha over alpha difference, in case bgAlpha < 1)
-				if ( ! isRadial || channel == 0 )
-					ctx.fillRect( 0, channelTop - channelGap, canvas.width, ( this.overlay && this.reflexAlpha == 1 ? analyzerHeight : channelHeight ) + channelGap );
+				if ( ! isRadial || channel === 0 )
+					ctx.fillRect( 0, channelTop - channelGap, canvas.width, ( this.overlay && this.reflexAlpha === 1 ? analyzerHeight : channelHeight ) + channelGap );
 
 				ctx.globalAlpha = 1;
 			}
@@ -988,10 +989,10 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 				for ( let db = maxdB; db > mindB; db -= 5 ) {
 					const posY = channelTop + ( maxdB - db ) * interval,
-						  even = ( db % 2 == 0 ) | 0;
+						  even = ( db % 2 === 0 ) | 0;
 
 					if ( even ) {
-						const labelY = posY + fontSize * ( posY == channelTop ? .8 : .35 );
+						const labelY = posY + fontSize * ( posY === channelTop ? .8 : .35 );
 						ctx.fillText( db, scaleWidth * .85, labelY );
 						ctx.fillText( db, canvas.width - scaleWidth * .1, labelY );
 						ctx.strokeStyle = '#888';
@@ -1037,7 +1038,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 				let bar       = this._bars[ i ],
 					barHeight = 0;
 
-				if ( bar.endIdx == 0 ) { // single FFT bin
+				if ( bar.endIdx === 0 ) { // single FFT bin
 					barHeight = fftData[ bar.dataIdx ];
 					// perform value interpolation when several bars share the same bin, to generate a smooth curve
 					if ( bar.factor ) {
@@ -1072,7 +1073,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 					bar.accel[ channel ] = 0;
 				}
 
-				if ( isRadial && channel == 1 )
+				if ( isRadial && channel === 1 )
 					barHeight *= -1;
 
 				let adjWidth = width,    // bar width may need small adjustments for some bars, when barSpace == 0
@@ -1080,17 +1081,17 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 				// Draw current bar or line segment
 
-				if ( mode == 10 ) {
+				if ( mode === 10 ) {
 					if ( isRadial ) {
 						// in radial graph mode, use value of previous FFT bin (if available) as the initial amplitude
-						if ( i == 0 && bar.dataIdx && bar.posX )
-							ctx.lineTo( ...radialXY( 0, fftData[ bar.dataIdx - 1 ] / 255 * ( centerY - radius ) * ( channel == 1 ? -1 : 1 ) ) );
+						if ( i === 0 && bar.dataIdx && bar.posX )
+							ctx.lineTo( ...radialXY( 0, fftData[ bar.dataIdx - 1 ] / 255 * ( centerY - radius ) * ( channel === 1 ? -1 : 1 ) ) );
 						// draw line to current point, avoiding overlapping wrap-around frequencies
 						if ( bar.posX >= 0 )
 							ctx.lineTo( ...radialXY( bar.posX, barHeight ) );
 					}
 					else {
-						if ( i == 0 ) {
+						if ( i === 0 ) {
 							// in linear mode, start the line off screen
 							ctx.moveTo( -this.lineWidth, analyzerBottom );
 							// use value of previous FFT bin
@@ -1106,7 +1107,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 						if ( isLedDisplay )
 							posX += Math.max( ledSpaceH / 2, this._barSpacePx / 2 );
 						else {
-							if ( this._barSpace == 0 ) {
+							if ( this._barSpace === 0 ) {
 								posX |= 0;
 								if ( i > 0 && posX > this._bars[ i - 1 ].posX + width ) {
 									posX--;
@@ -1159,8 +1160,8 @@ export default class AudioMotionAnalyzer extends React.Component {
 						else if ( ! isRadial ) {
 							ctx.fillRect( posX, analyzerBottom - bar.peak[ channel ], adjWidth, 2 );
 						}
-						else if ( mode != 10 && bar.posX >= 0 ) { // radial - no peaks for mode 10 or wrap-around frequencies
-							radialPoly( posX, bar.peak[ channel ] * ( channel == 1 ? -1 : 1 ), adjWidth, -2 );
+						else if ( mode !== 10 && bar.posX >= 0 ) { // radial - no peaks for mode 10 or wrap-around frequencies
+							radialPoly( posX, bar.peak[ channel ] * ( channel === 1 ? -1 : 1 ), adjWidth, -2 );
 						}
 					}
 
@@ -1177,7 +1178,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 			ctx.globalAlpha = 1;
 
 			// Fill/stroke drawing path for mode 10 and radial
-			if ( mode == 10 ) {
+			if ( mode === 10 ) {
 				if ( isRadial )
 					ctx.closePath();
 				else
@@ -1207,7 +1208,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 			if ( this._reflexRatio > 0 && ! isLumiBars ) {
 				let posY, height;
 				if ( this.reflexFit || isStereo ) { // always fit reflex in stereo mode
-					posY   = isStereo && channel == 0 ? channelHeight + channelGap : 0;
+					posY   = isStereo && channel === 0 ? channelHeight + channelGap : 0;
 					height = channelHeight - analyzerHeight;
 				}
 				else {
@@ -1217,7 +1218,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 				// set alpha and brightness for the reflection
 				ctx.globalAlpha = this.reflexAlpha;
-				if ( this.reflexBright != 1 )
+				if ( this.reflexBright !== 1 )
 					ctx.filter = `brightness(${this.reflexBright})`;
 
 				// create the reflection
@@ -1253,7 +1254,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 			if ( isRadial ) {
 				ctx.save();
 				ctx.translate( centerX, centerY );
-				if ( this._spinSpeed != 0 )
+				if ( this._spinSpeed !== 0 )
 					ctx.rotate( this._spinAngle + HALF_PI );
 				ctx.drawImage( canvasR, -canvasR.width >> 1, -canvasR.width >> 1 );
 				ctx.restore();
@@ -1314,7 +1315,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 
 		const currGradient = this._gradients[ this._gradient ],
 			  colorStops   = currGradient.colorStops,
-			  isHorizontal = currGradient.dir == 'h';
+			  isHorizontal = currGradient.dir === 'h';
 
 		let grad;
 
@@ -1349,7 +1350,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 					}
 
 					// only for split mode
-					if ( channel == 1 ) {
+					if ( channel === 1 ) {
 						// add colors in reverse order if radial or lumi are active
 						if ( this._radial || isLumiBars ) {
 							const revIndex = maxIndex - index;
@@ -1358,7 +1359,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 						}
 						else {
 							// if the first offset is not 0, create an additional color stop to prevent bleeding from the first channel
-							if ( index == 0 && offset > 0 )
+							if ( index === 0 && offset > 0 )
 								addColorStop( .5, colorInfo );
 							// bump the offset to the second half of the gradient
 							offset += .5;
@@ -1369,7 +1370,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 					addColorStop( offset, colorInfo );
 
 					// create additional color stop at the end of first channel to prevent bleeding
-					if ( this._stereo && index == maxIndex && offset < .5 )
+					if ( this._stereo && index === maxIndex && offset < .5 )
 						addColorStop( .5, colorInfo );
 				});
 			}
@@ -1504,7 +1505,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 				temperedScale = [];
 
 			while ( ( freq = C0 * ROOT24 ** i ) <= maxFreq ) {
-				if ( freq >= minFreq && i % notesPerBand == 0 )
+				if ( freq >= minFreq && i % notesPerBand === 0 )
 					temperedScale.push( freq );
 				i++;
 			}
@@ -1531,7 +1532,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 					idx = bin;
 
 				// FFT does not provide many coefficients for low frequencies, so several bars may end up using the same data
-				if ( idx == prevIdx ) {
+				if ( idx === prevIdx ) {
 					nBars++;
 				}
 				else {
@@ -1616,7 +1617,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 			  newHeight = isFullscreen ? this._fsHeight : ( this._height || this._container.clientHeight || this._defaultHeight ) * this._pixelRatio | 0;
 
 		// if canvas dimensions haven't changed, quit
-		if ( canvas.width == newWidth && canvas.height == newHeight )
+		if ( canvas.width === newWidth && canvas.height === newHeight )
 			return;
 
 		// apply new dimensions
@@ -1700,7 +1701,7 @@ export default class AudioMotionAnalyzer extends React.Component {
 		const callbacks = [ 'onCanvasDraw', 'onCanvasResize' ];
 
 		// compile valid properties; `start` is not an actual property and is handled after setting everything else
-		const validProps = Object.keys( defaults ).concat( callbacks, ['height', 'width'] ).filter( e => e != 'start' );
+		const validProps = Object.keys( defaults ).concat( callbacks, ['height', 'width'] ).filter( e => e !== 'start' );
 
 		if ( useDefaults || options === undefined )
 			options = Object.assign( defaults, options ); // NOTE: defaults is modified!
